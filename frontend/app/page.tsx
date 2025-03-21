@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ArrowLeftRight } from "lucide-react";
@@ -23,18 +23,25 @@ export default function Home() {
     const [fromUnit, setFromUnit] = useState<string>('');
     const [toUnit, setToUnit] = useState<string>('');
     const [fromValue, setFromValue] = useState<string>('');
+    const [toValue, setToValue] = useState<string>('');
+    const [debouncedValue, setDebouncedValue] = useState<string>('');
 
     const handleCategoryChange = (newCategory: UnitCategory) => {
         setCategory(newCategory);
         setFromUnit(''); // Reset fromUnit on category switch
         setToUnit('');   // Reset toUnit as well
         setFromValue('');
+        setToValue('');
     };
 
     const handleSwapUnits = () => {
         if (fromUnit && toUnit) {
             setFromUnit(toUnit);
             setToUnit(fromUnit);
+        }
+        if (toValue && fromValue) {
+            setFromValue(toValue);
+            setToValue(fromValue);
         }
     }
 
@@ -43,6 +50,8 @@ export default function Home() {
         
         if (newFromUnit === toUnit) {
             setToUnit('');
+            setFromValue('');
+            setToValue('');
         };
     }
 
@@ -54,7 +63,36 @@ export default function Home() {
         } else {
             if (/^\d*\.?\d*$/.test(value)) setFromValue(value);
         }
+        
+        if (value == '') {
+            setToValue('');
+        }
     }
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(fromValue);
+        }, 500);
+        return () => {
+            clearTimeout(handler);
+        }
+    }, [fromValue]);
+
+    useEffect(() => {
+        const fetchConversion = async () => {
+            if (!fromValue || !fromUnit || !toUnit) return;
+
+            try {
+                const response = await convertUnits(category, fromUnit, toUnit, parseFloat(fromValue));
+                console.log('Response:', response)
+                setToValue(response);
+            } catch (error) {
+                console.error("Error fetching conversion:", error);
+            }
+        };
+
+        fetchConversion();
+    }, [debouncedValue, fromUnit, toUnit, category])
 
     return (
         <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20)]">
@@ -131,7 +169,13 @@ export default function Home() {
                                     }
                                 </SelectContent>
                             </Select>
-                            <Input type="number" placeholder="Converted" className="w-[200px]" disabled/>
+                            <div 
+                                style={{backgroundColor: `color-mix(in oklab, var(--input) 30%, transparent)`}} 
+                                className={`w-[200px] text-muted-foreground opacity-50 text-sm px-3 py-2 rounded-md border
+                                ${toValue ? "text-white opacity-100" : ""}
+                            `}>
+                                {toValue || "Converted"}
+                            </div>
                         </div>
                     </div>
                 </div>
