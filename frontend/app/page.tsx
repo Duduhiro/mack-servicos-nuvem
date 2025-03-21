@@ -22,11 +22,13 @@ export default function Home() {
     const [category, setCategory] = useState<UnitCategory | ''>('');
     const [fromUnit, setFromUnit] = useState<string>('');
     const [toUnit, setToUnit] = useState<string>('');
+    const [fromValue, setFromValue] = useState<string>('');
 
     const handleCategoryChange = (newCategory: UnitCategory) => {
         setCategory(newCategory);
         setFromUnit(''); // Reset fromUnit on category switch
         setToUnit('');   // Reset toUnit as well
+        setFromValue('');
     };
 
     const handleSwapUnits = () => {
@@ -42,6 +44,16 @@ export default function Home() {
         if (newFromUnit === toUnit) {
             setToUnit('');
         };
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+    
+        if (category === "Temperature") {
+            if (/^-?\d*\.?\d*$/.test(value)) setFromValue(value);
+        } else {
+            if (/^\d*\.?\d*$/.test(value)) setFromValue(value);
+        }
     }
 
     return (
@@ -88,7 +100,7 @@ export default function Home() {
                                     }
                                 </SelectContent>
                             </Select>
-                            <Input type="number" placeholder="Convert" className="w-[200px]" disabled={!toUnit}/>
+                            <Input type="number" onChange={handleInputChange} placeholder="Convert" className="w-[200px]" value={fromValue} disabled={!toUnit}/>
                         </div>
                         <div>
                             <Button disabled={!toUnit} onClick={handleSwapUnits} className="border border-background bg-white text-background hover:cursor-pointer hover:bg-neutral-900 hover:border-neutral-900 hover:text-white"><ArrowLeftRight/></Button>
