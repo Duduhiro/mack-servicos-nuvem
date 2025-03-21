@@ -11,18 +11,38 @@ import convertUnits from "./fetching";
 type UnitCategory = 'Length' | 'Temperature' | 'Time' | 'None';
 
 const units: Record<UnitCategory, string[]> = {
-    Length: ['centimeters', 'meters', 'miles', 'feet', 'inches'],
-    Temperature: ['celsius', 'fahrenheit', 'kelvin'],
-    Time: ['seconds', 'minutes', 'hours', 'days'],
+    Length: ['Centimeters', 'Meters', 'Miles', 'Feet', 'Inches'],
+    Temperature: ['Celsius', 'Fahrenheit', 'Kelvin'],
+    Time: ['Seconds', 'Minutes', 'Hours', 'Days'],
     None: []
 }
 
 export default function Home() {
 
-    const [category, setCategory] = useState<UnitCategory>('Length');
+    const [category, setCategory] = useState<UnitCategory | ''>('');
     const [fromUnit, setFromUnit] = useState<string>('');
     const [toUnit, setToUnit] = useState<string>('');
 
+    const handleCategoryChange = (newCategory: UnitCategory) => {
+        setCategory(newCategory);
+        setFromUnit(''); // Reset fromUnit on category switch
+        setToUnit('');   // Reset toUnit as well
+    };
+
+    const handleSwapUnits = () => {
+        if (fromUnit && toUnit) {
+            setFromUnit(toUnit);
+            setToUnit(fromUnit);
+        }
+    }
+
+    const handleFromUnitChange = (newFromUnit: string) => {
+        setFromUnit(newFromUnit);
+        
+        if (newFromUnit === toUnit) {
+            setToUnit('');
+        };
+    }
 
     return (
         <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20)]">
@@ -30,7 +50,7 @@ export default function Home() {
                 <h1 className="text-8xl font-semibold">UNIT CONVERTER</h1>
                 <div className="w-full flex gap-6 items-center flex-col">
                     <div className="w-full flex items-center justify-center">
-                        <Select onValueChange={(e) => setCategory(e as UnitCategory)}>
+                        <Select onValueChange={(value) => handleCategoryChange(value as UnitCategory)} value={category}>
                             <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Unit..."/>
                             </SelectTrigger>
@@ -47,42 +67,59 @@ export default function Home() {
                     </div>
                     <div className="w-full flex">
                         <div className="grow-1 flex items-end pr-4 flex-col gap-6">
-                            <Select>
+                            <Select onValueChange={handleFromUnitChange} value={fromUnit} disabled={!category}>
                                 <SelectTrigger className="w-[200px]">
-                                    <SelectValue placeholder="Unit..." />
+                                    <SelectValue placeholder={
+                                            !category
+                                            ? "Select a category first"
+                                            : fromUnit
+                                            ? fromUnit
+                                            : "From unit"
+                                    }/>
                                 </SelectTrigger>
                                 <SelectContent className="bg-background">
                                     {
-                                        category == 'None' && (
-                                            units[category].map((key) => (
-                                                <SelectItem key={key} value={key}>{key}</SelectItem>
-                                            ))
-                                        )
-                                    }
-                                    {
-                                        category == 'None' && (
-                                            <></>
-                                        )
+                                        category && 
+                                        units[category as UnitCategory].map((unit) => (
+                                            <SelectItem key={unit} value={unit}>
+                                                {unit}
+                                            </SelectItem>
+                                        ))
                                     }
                                 </SelectContent>
                             </Select>
-                            <Input type="number" placeholder="Convert" className="w-[200px]"/>
+                            <Input type="number" placeholder="Convert" className="w-[200px]" disabled={!toUnit}/>
                         </div>
                         <div>
-                            <Button className="border border-background bg-white text-background hover:cursor-pointer hover:bg-background hover:border-white hover:text-white"><ArrowLeftRight/></Button>
+                            <Button disabled={!toUnit} onClick={handleSwapUnits} className="border border-background bg-white text-background hover:cursor-pointer hover:bg-neutral-900 hover:border-neutral-900 hover:text-white"><ArrowLeftRight/></Button>
                         </div>
                         <div className="grow-1 flex items-start pl-4 flex-col gap-6">
-                            <Select>
+                            <Select onValueChange={setToUnit} value={toUnit} disabled={!category || !fromUnit}>
                                 <SelectTrigger className="w-[200px]">
-                                    <SelectValue placeholder="Unit..." />
+                                    <SelectValue placeholder={
+                                            !category
+                                            ? "Select a category first"
+                                            : !fromUnit
+                                            ? "Select 'From Unit' first"
+                                            : toUnit
+                                            ? toUnit
+                                            : "Select Unit"
+                                    }/>
                                 </SelectTrigger>
                                 <SelectContent className="bg-background">
-                                    <SelectItem value="Length" className="hover:bg-neutral-900">Length</SelectItem>
-                                    <SelectItem value="Temperature" className="hover:bg-neutral-900">Temperature</SelectItem>
-                                    <SelectItem value="Time" className="hover:bg-neutral-900">Time</SelectItem>
+                                    {
+                                        fromUnit && 
+                                        units[category as UnitCategory]
+                                        .filter((unit) => unit !== fromUnit)
+                                        .map((unit) => (
+                                            <SelectItem key={unit} value={unit}>
+                                                {unit}
+                                            </SelectItem>
+                                        ))
+                                    }
                                 </SelectContent>
                             </Select>
-                            <Input type="number" placeholder="Converted..." value={"2000"} className="w-[200px]" disabled/>
+                            <Input type="number" placeholder="Converted" className="w-[200px]" disabled/>
                         </div>
                     </div>
                 </div>
